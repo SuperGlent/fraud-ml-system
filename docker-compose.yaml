@@ -1,0 +1,106 @@
+
+services: 
+  db:
+    image: postgres:16.0
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    command: >
+      mlflow server
+        --backend-store-uri postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/mlflow_db
+        --default-artifact-root /mlflow/artifacts
+        --host 0.0.0.0
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - mlflow-artifacts:/mlflow/artifacts
+
+  airflow:
+    build: 
+      context: .
+      dockerfile: airflow/Dockerfile
+
+    command: standalone
+
+    depends_on:
+      mlflow:
+        condition: service_started
+      db:
+        condition: service_healthy
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dags:/opt/airflow/dags
+
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USERNAME}:${DB_PASSWORD}@db:5432/airflow_db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - PYTHONPATH=/opt/airflow
+
+  training:
+    build:
+      context: .
+      dockerfile: training/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+
+    container_name: fastapi
+
+    restart: always
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+    depends_on:
+      db:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
+    environment:
+      - PYTHONPATH=/app
+
+  proxy:
+    image: nginx
+    container_name: nginx_proxy
+    depends_on:
+      app: 
+        condition: service_healthy
+    ports: 
+      - "80:80"
+    volumes:
+      - ./app/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/html:/usr/share/nginx/html
+
+volumes:
+  db-data:
+  mlflow-artifacts:

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Transaction Form</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f8;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.container{
+    background:white;
+    padding:30px;
+    width:450px;
+    border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+h2{
+    text-align:center;
+}
+
+form{
+    display:flex;
+    flex-direction:column;
+}
+
+label{
+    margin-top:10px;
+    font-weight:bold;
+}
+
+input{
+    padding:8px;
+    margin-top:4px;
+    border-radius:5px;
+    border:1px solid #ccc;
+}
+
+button{
+    margin-top:20px;
+    padding:10px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+    font-size:16px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#43a047;
+}
+
+.error{
+    color:red;
+    font-size:13px;
+}
+
+.success{
+    color:green;
+    text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Transaction</h2>
+
+<form id="transactionForm">
+
+<label>Transaction ID</label>
+<input type="number" id="TransactionID" required min="1">
+
+<label>Category (Base64)</label>
+<input type="text" id="Category" required>
+
+<label>Transaction Amount</label>
+<input type="number" id="TransactionAmount" step="0.01" min="0.01" required>
+
+<label>Anomaly Score</label>
+<input type="number" id="AnomalyScore" step="0.01" min="0" required>
+
+<label>Merchant ID</label>
+<input type="number" id="MerchantID" min="1" required>
+
+<label>Amount</label>
+<input type="number" id="Amount" min="1" required>
+
+<label>Customer ID</label>
+<input type="number" id="CustomerID" min="1" required>
+
+<label>Name (Base64)</label>
+<input type="text" id="Name" required>
+
+<label>Age</label>
+<input type="number" id="Age" min="1" max="120" required>
+
+<label>Address (Base64)</label>
+<input type="text" id="Address" required>
+
+<label>Account Balance</label>
+<input type="number" id="AccountBalance" step="0.01" min="0" required>
+
+<label>Last Login</label>
+<input type="datetime-local" id="LastLogin" required>
+
+<label>Suspicious Flag</label>
+<input type="number" id="SuspiciousFlag" min="0" required>
+
+<button type="submit">Submit</button>
+
+<p id="message"></p>
+
+</form>
+
+</div>
+
+
+<script>
+
+function isBase64(str) {
+    try {
+        return btoa(atob(str)) === str;
+    } catch (err) {
+        return false;
+    }
+}
+
+document.getElementById("transactionForm").addEventListener("submit", function(e){
+
+    e.preventDefault();
+
+    let age = document.getElementById("Age").value
+    let category = document.getElementById("Category").value
+    let name = document.getElementById("Name").value
+    let address = document.getElementById("Address").value
+
+    let message = document.getElementById("message")
+
+    if(age > 120){
+        message.innerHTML = "Age cannot be greater than 120"
+        message.className = "error"
+        return
+    }
+
+    if(!isBase64(category) || !isBase64(name) || !isBase64(address)){
+        message.innerHTML = "Category, Name and Address must be valid Base64"
+        message.className = "error"
+        return
+    }
+
+    message.innerHTML = "Transaction validated successfully!"
+    message.className = "success"
+
+})
+
+</script>
+
+</body>
+</html>
