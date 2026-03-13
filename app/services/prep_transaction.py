@@ -1,5 +1,5 @@
 from schemas import Transaction
-from pydentic import BaseModel
+
 
 def preproc(data: str) -> bool:
     

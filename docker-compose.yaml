@@ -48,7 +48,7 @@ services:
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./dags:/opt/airflow/dags
+      - ./airflow/dags:/opt/airflow/dags
 
     environment:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USERNAME}:${DB_PASSWORD}@db:5432/airflow_db
@@ -99,7 +99,7 @@ services:
       - "80:80"
     volumes:
       - ./app/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/html:/usr/share/nginx/html
+      - ./app/nginx/html:/usr/share/nginx/html
 
 volumes:
   db-data:
