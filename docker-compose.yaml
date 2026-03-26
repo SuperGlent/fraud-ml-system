@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,6 +22,8 @@ services:
         --backend-store-uri postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/mlflow_db
         --default-artifact-root /mlflow/artifacts
         --host 0.0.0.0
+        --port 5000
+        --allowed-hosts "*"
     ports:
       - "5000:5000"
     depends_on:
@@ -63,6 +65,10 @@ services:
       db:
         condition: service_healthy
 
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
   app:
     build:
       context: ./app
@@ -73,7 +79,7 @@ services:
     restart: always
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      test: ["CMD-SHELL", "curl", "-f", "http://localhost:8000/docs"]
       interval: 5s
       timeout: 2s
       retries: 5
@@ -88,13 +94,14 @@ services:
 
     environment:
       - PYTHONPATH=/app
+      - requirements.txt=requirements.txt
 
   proxy:
     image: nginx
     container_name: nginx_proxy
     depends_on:
       app: 
-        condition: service_healthy
+        condition: service_started
     ports: 
       - "80:80"
     volumes:

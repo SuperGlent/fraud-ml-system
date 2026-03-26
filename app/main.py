@@ -1,27 +1,36 @@
-from fastapi import FastAPI, Body
-from sqlalchemy.engine import Engine
-from fastapi.responses import HTMLResponse, JSONResponse
-from services import preproc, preproc_features
-import mlflow
-import mlflow.pyfunc
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from services.prep_transaction import preproc_features
+from services.ModelManager import ModelManager
+from contextlib import asynccontextmanager
+from fastapi.exceptions import HTTPException
+from .schemas.Transaction import Transaction
 
+model = ModelManager()
 
-app = FastAPI()
-
-mlflow.set_tracking_uri("http://mlflow:5000")
-model = mlflow.pyfunc.load_model("models:/fraud_detection_model/Production")
-
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    model.load_model()
+    yield
+    
+app = FastAPI(lifespan=lifespan)
 
 @app.post("/send-transaction")
-async def main(data=Body()):
-    response = preproc(data)
-    if isinstance(response, Exception):
-        return JSONResponse(content={"Data is not valid": response}, status_code=400)
-    prep_response = preproc_features(response)
-    predict = await model.predict(prep_response)
-    return JSONResponse(content={"Is fraud": predict})
-    
-    
-    
+async def main(data: Transaction):
+    try:
+        prep_tr = preproc_features(data)
+        predict = model.predict(prep_tr)
+        
+        if predict is None:
+            raise HTTPException(status_code=503, detail="Model is not available")
+            
+        return JSONResponse(content={"Is fraud": int(predict[0])})
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/admin/reload-model")
+def reload_model():
+    model.load_model()
+    return {"status": "model reloaded"}
     
     

@@ -1,20 +1,16 @@
-from pydentic import BaseModel, PositiveInt, Base64Str, PositiveFloat, NonNegativeFloat, Field, NonNegativeInt
+from pydantic import BaseModel
 from datetime import datetime
 
 
+from pydantic import BaseModel
+from datetime import datetime, date
+
 class Transaction(BaseModel):
-    
-    TransactionID: PositiveInt
-    Category: str
-    TransactionAmount: PositiveFloat
-    AnomalyScore: NonNegativeFloat
-    MerchantID: PositiveInt
-    Amount: PositiveInt
-    CustomerID: PositiveInt
-    Name: str
-    Age: int = Field(gt=0, le=120)
-    Address: str
-    AccountBalance: NonNegativeFloat
-    LastLogin: datetime
-    SuspiciousFlag: NonNegativeInt
-        
+    Category: str 
+    TransactionAmount: float
+    AnomalyScore: float
+    Timestamp: datetime
+    LastLogin: date
+    Amount: float
+    AccountBalance: float
+    SuspiciousFlag: int
