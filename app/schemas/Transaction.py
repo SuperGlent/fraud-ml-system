@@ -1,9 +1,6 @@
 from pydantic import BaseModel
-from datetime import datetime
-
-
-from pydantic import BaseModel
 from datetime import datetime, date
+
 
 class Transaction(BaseModel):
     Category: str 

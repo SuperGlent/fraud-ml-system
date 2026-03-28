@@ -1,16 +1,16 @@
-from database import Base
-from sqlalchemy.orm import Mapped, mapped_column
+from database import Base, CustomBase
+from sqlalchemy import Column, Integer, Float, DateTime, Date
 import datetime
 
-class Transaction(Base):
-    FraudIndicator: Mapped[int]
-    Category: Mapped[int]
-    TransactionAmount: Mapped[float]
-    AnomalyScore: Mapped[float]
-    Gap: Mapped[int]
-    Hour: Mapped[int]
-    Timestemp: Mapped[datetime.datetime]
-    LastLogin: Mapped[datetime.date]
-    Amount: Mapped[float]
-    AccountBalance: Mapped[float]
-    SuspiciousFlag: Mapped[int]
+class Transaction(Base, CustomBase):
+    FraudIndicator = Column(Integer)
+    Category = Column(Integer)
+    TransactionAmount = Column(Float)
+    AnomalyScore = Column(Float)
+    Gap = Column(Integer)
+    Hour = Column(Integer)
+    Timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    LastLogin = Column(Date)
+    Amount = Column(Float)
+    AccountBalance = Column(Float)
+    SuspiciousFlag = Column(Integer)

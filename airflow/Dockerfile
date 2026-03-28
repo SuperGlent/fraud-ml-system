@@ -15,10 +15,10 @@ USER airflow
 ARG CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
 # Копируем файл зависимостей в корень контейнера
 COPY requirements.txt /requirements.txt
-
+COPY --chown=airflow:0 . /opt/airflow
 # Устанавливаем зависимости (БЕЗ флага --user)
 # Мы просто обновляем текущее виртуальное окружение Airflow
-RUN pip install --no-cache-dir -r /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt --constraint "${CONSTRAINT_URL}"
 
 # Указываем пути для поиска твоих модулей (папки services, training и т.д.)
 ENV PYTHONPATH="/opt/airflow"

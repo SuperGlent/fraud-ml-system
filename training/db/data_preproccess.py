@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from sqlalchemy import text
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
@@ -37,23 +38,33 @@ class Data():
                 
 
     def get_data(self):
-        query = "SELECT * FROM transactions"
-        data = pd.read_sql(query, self.connection)
+        query = text("SELECT * FROM transactions")
+        with self.engine.connect() as conn:
+            data = pd.read_sql(query, conn)
         return data
         
     def preproccess(self, raw_data: pd.DataFrame):
-        raw_data['Timestamp1'] = pd.to_datetime(raw_data['Timestamp'])
-        raw_data['Hour'] = raw_data['Timestamp1'].dt.hour
-        raw_data['LastLogin'] = pd.to_datetime(raw_data['LastLogin'])
-        raw_data['gap'] = (raw_data['Timestamp1'] - raw_data['LastLogin']).dt.days.abs()
+        df = raw_data.copy()
+        df['Timestamp1'] = pd.to_datetime(df['Timestamp'])
+        df['Hour'] = df['Timestamp1'].dt.hour
+        df['LastLogin'] = pd.to_datetime(df['LastLogin'])
+        df['gap'] = (df['Timestamp1'] - df['LastLogin']).dt.days.abs()
         
         label_encoder = LabelEncoder()
-        raw_data['Category'] = label_encoder.fit_transform(raw_data['Category'])
-        return raw_data
+        if 'Category' in df.columns:
+            df['Category'] = label_encoder.fit_transform(df['Category'].astype(str))
+            
+        return df
         
     
     def upload_data(self, data: pd.DataFrame, name="transactions", if_exists="replace"):
-        data.to_sql(name=name, 
-                    con=self.connection, 
-                    if_exists=if_exists)
+        with self.engine.begin() as conn:
+            data.to_sql(
+                name=name, 
+                con=conn, 
+                if_exists=if_exists,
+                index=False,
+                chunksize=1000, 
+                method='multi'
+            )
         

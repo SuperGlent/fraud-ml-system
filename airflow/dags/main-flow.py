@@ -1,10 +1,10 @@
-from airflow.sdk import DAG
+from airflow import DAG
 from datetime import datetime
+from airflow.operators.python import PythonOperator
 from airflow.providers.docker.operators.docker import DockerOperator
-from airflow.providers.python.operators.python import PythonOperator
-from airflow.providers.bash.poerators.bash import BashOperator
+from airflow.operators.bash import BashOperator
 import sys
-import os
+
 
 sys.path.append('/opt/airflow')
 from training.db.load_data import main_load_data

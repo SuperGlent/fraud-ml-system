@@ -4,7 +4,7 @@ from services.prep_transaction import preproc_features
 from services.ModelManager import ModelManager
 from contextlib import asynccontextmanager
 from fastapi.exceptions import HTTPException
-from .schemas.Transaction import Transaction
+from schemas.Transaction import Transaction
 
 model = ModelManager()
 

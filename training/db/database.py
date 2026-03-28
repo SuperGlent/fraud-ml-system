@@ -1,18 +1,22 @@
-from sqlalchemy.orm import DeclarativeBase, declared_attr, mapped_column, Mapped
+from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy import Column, Integer
 import os
 
-database_uri = f"postgresql://{os.environ.get("POSTGRES_USER")}:{os.environ.get("POSTGRES_PASSWORD")}@db:5432/fraud_training"
+pg_user = os.environ.get("POSTGRES_USER", "airflow")
+pg_pass = os.environ.get("POSTGRES_PASSWORD", "airflow")
+pg_db = os.environ.get("POSTGRES_DB", "fraud_training")
 
-class Base(DeclarativeBase):
-    
-    __abstract__ = True
-    
-    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
-    
-    @declared_attr.directive
-    def __tablename__(cls) -> str:
+
+database_uri = f"postgresql://{pg_user}:{pg_pass}@db:5432/{pg_db}"
+
+Base = declarative_base()
+
+class CustomBase(object):
+    @declared_attr
+    def __tablename__(cls):
         return cls.__name__.lower() + "s"
     
+    id = Column(Integer, primary_key=True, autoincrement=True)
     
     
 
