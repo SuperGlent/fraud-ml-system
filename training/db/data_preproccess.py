@@ -6,17 +6,17 @@ import os
 import kagglehub
 from sklearn.preprocessing import LabelEncoder
 
-
+#class for managing data 
 class Data():
 
+    #init sqlalchemy engine, dburi taken from database file
     def __init__(self, db_uri: str):
         self.engine = sa.create_engine(db_uri) 
-        self.connection = self.engine.connect()
         
-            
+    #loading data for preproccessing and managing
     @staticmethod
     def load_local_data(uri) -> pd.DataFrame:
-        path = kagglehub.download_dataset(uri)
+        path = kagglehub.dataset_download(uri)
         links = [os.listdir(path + f"/Data/{i}") + [i] for i in os.listdir(path + "/Data")]
         dfs = {}
         for link in links:
@@ -25,6 +25,7 @@ class Data():
                     dfs[l] = pd.read_csv(path + f"/Data/{link[-1]}/{l}")
                 except FileNotFoundError as e:
                     continue
+        #a lot of merges
         data1 = pd.merge(dfs["transaction_metadata.csv"], dfs["transaction_records.csv"], on="TransactionID")
         data1 = pd.merge(data1, dfs["amount_data.csv"], on="TransactionID")
         data1 = pd.merge(data1, dfs["anomaly_scores.csv"], on="TransactionID")
@@ -36,14 +37,17 @@ class Data():
         data = pd.merge(data1, data2, on="CustomerID")
         return data
                 
-
+    #get data from database
     def get_data(self):
         query = text("SELECT * FROM transactions")
         with self.engine.connect() as conn:
             data = pd.read_sql(query, conn)
         return data
         
-    def preproccess(self, raw_data: pd.DataFrame):
+    #preproccess data
+    @staticmethod
+    def preproccess(raw_data: pd.DataFrame):
+        columns_to_be_dropped = ['TransactionID', 'MerchantID', 'CustomerID', 'Name', 'Age', 'Address', "MerchantName", "Location", 'Timestamp', 'Timestamp1', 'LastLogin']
         df = raw_data.copy()
         df['Timestamp1'] = pd.to_datetime(df['Timestamp'])
         df['Hour'] = df['Timestamp1'].dt.hour
@@ -53,10 +57,13 @@ class Data():
         label_encoder = LabelEncoder()
         if 'Category' in df.columns:
             df['Category'] = label_encoder.fit_transform(df['Category'].astype(str))
-            
+        for i in columns_to_be_dropped:
+            if i not in df.columns:
+                columns_to_be_dropped.remove(i)
+        df = df.drop(columns_to_be_dropped, axis="columns")
         return df
         
-    
+    #upload data to database
     def upload_data(self, data: pd.DataFrame, name="transactions", if_exists="replace"):
         with self.engine.begin() as conn:
             data.to_sql(

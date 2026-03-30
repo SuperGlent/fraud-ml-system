@@ -1,22 +1,31 @@
-
+#docker-compose file for building the whole application
 services: 
+
+  #database service
   db:
     image: postgres:16.0
+    container_name: db
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    #healthcheck for other services
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    
+    #some volumes and bid mount
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql 
 
+  #mlflow server with UI
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest
+    container_name: mlflow
+    #building server and db setup
     command: >
       mlflow server
         --backend-store-uri postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/mlflow_db
@@ -30,13 +39,16 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - mlflow-artifacts:/mlflow/artifacts
+      - mlflow-artifacts:/mlflow/artifacts #persistant storage
 
+  #airflow server
   airflow:
     build: 
       context: .
       dockerfile: airflow/Dockerfile
+    container_name: airflow
 
+    #creating user admin with password admin, i also should leave this in .env, but it's still admin admin so noth to hide
     command: bash -c "airflow db init && airflow users create --username admin --password admin --firstname Admin --lastname Admin --role Admin --email admin@example.com || true && airflow standalone"
 
     depends_on:
@@ -48,6 +60,7 @@ services:
     ports:
       - "8080:8080"
 
+    #mount docker.sock to allow airfllow to run containers and mount dags for flexible changing 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./airflow/dags:/opt/airflow/dags
@@ -55,20 +68,25 @@ services:
     environment:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USERNAME}:${DB_PASSWORD}@db:5432/airflow_db
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
       - PYTHONPATH=/opt/airflow
 
+  #training container which just builds there and runs with DockerOperator in airflow. I should specify network and env vars!
   training:
     build:
       context: .
       dockerfile: training/Dockerfile
+    container_name: training
     depends_on:
       db:
         condition: service_healthy
 
     environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
 
+  #fastapi application service
   app:
     build:
       context: ./app
@@ -96,6 +114,7 @@ services:
       - PYTHONPATH=/app
       - requirements.txt=requirements.txt
 
+  #nginx container
   proxy:
     image: nginx
     container_name: nginx_proxy
@@ -108,6 +127,7 @@ services:
       - ./app/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./app/nginx/html:/usr/share/nginx/html
 
+#persistant volumes
 volumes:
   db-data:
   mlflow-artifacts:

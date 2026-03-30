@@ -1,6 +1,9 @@
-from database import Base, CustomBase
+from .database import Base, CustomBase
 from sqlalchemy import Column, Integer, Float, DateTime, Date
 import datetime
+
+
+"""SqlAlchemy models"""
 
 class Transaction(Base, CustomBase):
     FraudIndicator = Column(Integer)

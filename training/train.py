@@ -3,47 +3,51 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
 import mlflow
 from mlflow.tracking import MlflowClient
-from training.db.data_preproccess import Data
-from .db.database import database_uri
+from db.data_preproccess import Data
+from db.database import database_uri
 from imblearn.over_sampling import SMOTE
 
-mlflow.set_tracking_uri("http://mlflow:5000")
-mlflow.set_experiment("fraud_detection")
+"""Main training script with mflow tracking"""
 
+mlflow.set_tracking_uri("http://mlflow:5000") #set mlflow client 
+mlflow.set_experiment("fraud_detection") #set new experiment
+
+#main function
 def train_model():
     with mlflow.start_run(run_name="Logistic_Regression_SMOTE"):
-        # 1. Загрузка данных
+        #downloading data from db
         data_manager = Data(db_uri=database_uri)
         data = data_manager.get_data()
         
-        # 2. Подготовка фичей
-        # Добавил фильтр, чтобы не упало, если колонок вдруг нет в базе
+        # features managing
         drop_cols = ['FraudIndicator', 'Timestamp', 'Timestamp1', 'LastLogin']
         existing_drop_cols = [c for c in drop_cols if c in data.columns]
         
+        #X and Y columns
         X = data.drop(existing_drop_cols, axis=1)
         Y = data['FraudIndicator']
         
-        # 3. SMOTE для балансировки (Fraud обычно < 1%)
+        #SMOTE for balancing classes destribution
         smote = SMOTE(random_state=42)
         X_resampled, Y_resampled = smote.fit_resample(X, Y)
         
+        #train-test split
         X_train, X_test, Y_train, Y_test = train_test_split(
             X_resampled, Y_resampled, random_state=42, test_size=0.2
         )
 
-        # 4. Обучение (увеличил max_iter для стабильности)
+        #Training
         model = LogisticRegression(max_iter=1000)
         model.fit(X_train, Y_train)
         
-        # 5. Логирование модели и регистрация
+        #Model logging
         model_info = mlflow.sklearn.log_model(
             sk_model=model, 
             artifact_path="model", 
             registered_model_name="fraud_detection_model"
         )
 
-        # 6. Расчет метрик (ВАЖНО: ROC-AUC по вероятностям!)
+        #Roc-Auc metrics
         pred = model.predict(X_test)
         pred_proba = model.predict_proba(X_test)[:, 1] # Вероятность класса 1
         
@@ -53,19 +57,20 @@ def train_model():
         }
         mlflow.log_metrics(metrics)
 
-        # 7. Перевод модели в Production через Client API
+        #hand over the model with client
         client = MlflowClient()
-        # Получаем последнюю версию
+        #get the last version
         latest_version = client.get_latest_versions("fraud_detection_model", stages=["None"])[0].version
         
-        # Используем современный подход (Aliases) + старый для совместимости
+        #Model version trasition
         client.transition_model_version_stage(
             name="fraud_detection_model",
             version=latest_version,
             stage="Production"
         )
-        
+
         print(f"Successfully trained version {latest_version} and moved to Production.")
 
+#entry point
 if __name__ == "__main__":
     train_model()

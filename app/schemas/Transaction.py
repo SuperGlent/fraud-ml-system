@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime, date
 
-
+#transaction scheme to validate data from user
 class Transaction(BaseModel):
     Category: str 
     TransactionAmount: float
