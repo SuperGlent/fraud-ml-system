@@ -1,58 +1,139 @@
-<form id="transactionForm">
-    <label>Category</label>
-    <input type="text" id="Category" placeholder="e.g. Food" required>
-    
-    <label>Transaction Amount</label>
-    <input type="number" id="TransactionAmount" step="0.01" required>
-    
-    <label>Anomaly Score</label>
-    <input type="number" id="AnomalyScore" step="0.01" required>
-    
-    <label>Timestamp</label>
-    <input type="datetime-local" id="Timestamp" required>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fraud Check</title>
 
-    <label>Last Login (Date)</label>
-    <input type="date" id="LastLogin" required>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
 
-    <label>Amount</label>
-    <input type="number" id="Amount" step="0.01" required>
+    .container {
+        background: white;
+        padding: 25px 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        width: 350px;
+    }
 
-    <label>Account Balance</label>
-    <input type="number" id="AccountBalance" step="0.01" required>
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
 
-    <label>Suspicious Flag (0 or 1)</label>
-    <input type="number" id="SuspiciousFlag" min="0" max="1" required>
+    label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+        font-size: 14px;
+    }
 
-    <button type="submit">Check for Fraud</button>
-    <p id="message"></p>
-</form>
+    input {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        transition: border 0.2s;
+    }
+
+    input:focus {
+        border-color: #4CAF50;
+        outline: none;
+    }
+
+    button {
+        margin-top: 20px;
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: #4CAF50;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    button:hover {
+        background: #45a049;
+    }
+
+    #message {
+        margin-top: 15px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .success {
+        color: green;
+    }
+
+    .error {
+        color: red;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Fraud Detection</h2>
+
+    <form id="transactionForm">
+        <label>Category</label>
+        <input type="text" id="Category" placeholder="e.g. Food" required>
+
+        <label>Transaction Amount</label>
+        <input type="number" id="TransactionAmount" step="0.01" required>
+
+        <label>Timestamp</label>
+        <input type="datetime-local" id="Timestamp" required>
+
+        <label>Last Login (Date)</label>
+        <input type="date" id="LastLogin" required>
+
+        <label>Amount</label>
+        <input type="number" id="Amount" step="0.01" required>
+
+        <label>Account Balance</label>
+        <input type="number" id="AccountBalance" step="0.01" required>
+
+        <button type="submit">Check for Fraud</button>
+        <p id="message"></p>
+    </form>
+</div>
 
 <script>
 document.getElementById("transactionForm").addEventListener("submit", async function(e){
     e.preventDefault();
     const message = document.getElementById("message");
-    
-    // Собираем данные в формате JSON
+
     const formData = {
-        Category: document.getElementById("Category").value,
-        TransactionAmount: parseFloat(document.getElementById("TransactionAmount").value),
-        AnomalyScore: parseFloat(document.getElementById("AnomalyScore").value),
-        Timestamp: document.getElementById("Timestamp").value,
-        LastLogin: document.getElementById("LastLogin").value,
         Amount: parseFloat(document.getElementById("Amount").value),
+        TransactionAmount: parseFloat(document.getElementById("TransactionAmount").value),
+        Category: document.getElementById("Category").value,
         AccountBalance: parseFloat(document.getElementById("AccountBalance").value),
-        SuspiciousFlag: parseInt(document.getElementById("SuspiciousFlag").value)
+        Timestamp: document.getElementById("Timestamp").value,
+        LastLogin: document.getElementById("LastLogin").value
     };
 
     try {
-        const response = await fetch('/send-transaction', { // Nginx пробросит это на FastAPI
+        const response = await fetch('/send-transaction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
         });
 
         const result = await response.json();
-        
+
         if (response.ok) {
             message.innerHTML = `Result: ${result["Is fraud"] === 1 ? "🚨 FRAUD" : "✅ OK"}`;
             message.className = result["Is fraud"] === 1 ? "error" : "success";
@@ -66,3 +147,6 @@ document.getElementById("transactionForm").addEventListener("submit", async func
     }
 });
 </script>
+
+</body>
+</html>

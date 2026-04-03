@@ -31,6 +31,7 @@ async def main(data: Transaction):
             
         return JSONResponse(content={"Is fraud": bool(predict[0])})
     except Exception as e:
+        print(str(e))
         raise HTTPException(status_code=400, detail=str(e))
 
 #end-point for model reloading

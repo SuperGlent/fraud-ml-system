@@ -47,7 +47,7 @@ class Data():
     #preproccess data
     @staticmethod
     def preproccess(raw_data: pd.DataFrame):
-        columns_to_be_dropped = ['TransactionID', 'MerchantID', 'CustomerID', 'Name', 'Age', 'Address', "MerchantName", "Location", 'Timestamp', 'Timestamp1', 'LastLogin']
+        columns_to_be_dropped = ['TransactionID', 'MerchantID', 'CustomerID', 'Name', 'Age', 'Address', "MerchantName", "Location", 'Timestamp', 'Timestamp1', 'LastLogin', "SuspiciousFlag", "AnomalyScore"]
         df = raw_data.copy()
         df['Timestamp1'] = pd.to_datetime(df['Timestamp'])
         df['Hour'] = df['Timestamp1'].dt.hour

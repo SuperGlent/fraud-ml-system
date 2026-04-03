@@ -3,11 +3,9 @@ from datetime import datetime, date
 
 #transaction scheme to validate data from user
 class Transaction(BaseModel):
-    Category: str 
+    Amount: float
     TransactionAmount: float
-    AnomalyScore: float
+    Category: str 
+    AccountBalance: float
     Timestamp: datetime
     LastLogin: date
-    Amount: float
-    AccountBalance: float
-    SuspiciousFlag: int

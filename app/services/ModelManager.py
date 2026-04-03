@@ -1,6 +1,6 @@
 import mlflow
 from .prep_transaction import preproc_features
-
+import pandas as pd
 
 #class for managing ml model
 class ModelManager:
@@ -8,7 +8,7 @@ class ModelManager:
     #initialize model and mlflow client
     def __init__(self):
         self.model = None
-        self.model_uri = "models:/fraud_detection_model/Production"
+        self.model_uri = "models:/fraud_detection_model@champion"
         mlflow.set_tracking_uri("http://mlflow:5000")
         
     #load model
@@ -22,9 +22,8 @@ class ModelManager:
         
         
     #predict is user request is a fraud.
-    def predict(self, data):
+    def predict(self, data: pd.DataFrame):
         if self.model:
-            data = preproc_features(data)
             pred = self.model.predict(data)
             return pred
             

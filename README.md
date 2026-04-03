@@ -45,7 +45,9 @@ to remoove all images and volumes and then build again.
 
 5. After successful pipeline execution, go to mlflow at http://localhost:5000 and see model metrics, train it again if you're not impressed :).
 
-6. Then you can go to http://localhost:8000/docs, send post request to admin/reload-model and see that you have your model in production detecting frauds! You just have to fill trasaction form on http://localhost:80, and send it, you will have response if model think your transaction is fraud.
+6. Then you can go to http://localhost:8000/docs, send post request to admin/reload-model and see that you have your model in production detecting frauds! You just have to fill trasaction form on http://localhost:80, and send it, you will have response if model think your transaction is fraud. Or better use this: 
+`curl -X 'POST' 'http://localhost:8000/admin/reload-model' -H 'accept: application/json' -d ''`
+
 
 Congratulations!!!
 
@@ -69,6 +71,6 @@ Partiate airflow standalone to webserver, scheduler and executor. So as it's rec
 
 Make alembic migration DAG, to improve flexibility of our app.
 
-
+Set up s3 storage for mlflow artifacts.
 
 *If you have any ideas or advices, I would be really gratefull to you for writing to my e-mail or create some push request! Thanks!*

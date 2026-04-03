@@ -19,4 +19,6 @@ def preproc_features(transaction: Transaction):
     
     #deleting garbage
     cols_to_drop = ['Timestamp', 'LastLogin']
-    return df.drop(columns=cols_to_drop)
+    df = df.drop(columns=cols_to_drop)
+    expected_order = ['Amount', 'TransactionAmount', 'Category', 'AccountBalance', 'Hour', 'gap']
+    return df[expected_order]
